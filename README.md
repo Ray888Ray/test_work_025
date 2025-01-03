@@ -28,8 +28,10 @@ DB_PASSWORD=postgres
 
 # TEST DATABASE
 TEST_DATABASE_URL="postgresql+asyncpg://postgres:postgres@test_db:5432/test_db"
-in case you want to run tests on localhost
+
+in case you want to run tests on localhost:
 TEST_DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/test_db"
+
 TEST_DB_NAME=test_db
 TEST_DB_USER=postgres
 TEST_DB_PASSWORD=postgres
