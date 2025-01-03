@@ -9,12 +9,20 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - test
       - db
       - redis
     env_file: .env
     environment:
       - PYTHONPATH=/app
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - TEST_DB_USER=${TEST_DB_USER}
+      - TEST_DB_PASSWORD=${TEST_DB_PASSWORD}
+      - TEST_DB_NAME=${TEST_DB_NAME}
+      - TEST_DATABASE_URL=${TEST_DATABASE_URL}
+    networks:
+      - app_network
 
   celery:
     build: .
@@ -27,12 +35,16 @@ services:
     env_file: .env
     environment:
       - PYTHONPATH=/app
+    networks:
+      - app_network
 
   redis:
     image: redis:alpine
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - app_network
 
   db:
     image: postgres:15
@@ -47,35 +59,45 @@ services:
       - pg_data:/var/lib/postgresql/data
     env_file:
       - .env
+    networks:
+      - app_network
 
-  test_db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${TEST_DB_USER}
-      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
-      POSTGRES_DB: ${TEST_DB_NAME}
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${TEST_DB_USER}" ]
-      interval: 5s
-      retries: 5
-    tmpfs:
-      - /var/lib/postgresql/data
-    env_file:
-      - .env
-
-  test:
-    build: .
-    container_name: test_runner
-    command: pytest tests/
-    depends_on:
-      - test_db
-      - redis
-    env_file: .env
-    environment:
-      - PYTHONPATH=/app
-      - TEST_DATABASE_URL=${TEST_DATABASE_URL}
+#  test_db:
+#    image: postgres:15
+#    environment:
+#      POSTGRES_USER: ${TEST_DB_USER}
+#      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
+#      POSTGRES_DB: ${TEST_DB_NAME}
+#    ports:
+#      - "5433:5432"
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U ${TEST_DB_USER} -d ${TEST_DB_NAME}"]
+#      interval: 10s
+#      retries: 10
+#    tmpfs:
+#      - /var/lib/postgresql/data
+#    env_file:
+#      - .env
+#    networks:
+#      - app_network
+#
+#  test:
+#    build: .
+#    container_name: test_runner
+#    command: pytest tests/
+#    depends_on:
+#      test_db:
+#        condition: service_healthy
+#    env_file: .env
+#    environment:
+#      - PYTHONPATH=/app
+#      - TEST_DATABASE_URL=${TEST_DATABASE_URL}
+#    networks:
+#      - app_network
 
 volumes:
   pg_data:
+
+networks:
+  app_network:
+    driver: bridge
